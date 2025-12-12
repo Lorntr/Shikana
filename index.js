@@ -1,5 +1,6 @@
 const fs = require('node:fs');
 const path = require('node:path');
+const express = require('express');
 const { Client, Events, GatewayIntentBits, Collection } = require('discord.js');
 const { token } = require('./config.json');
 
@@ -60,4 +61,17 @@ client.on(Events.InteractionCreate, async (interaction) => {
 		}
 	}
 });
+
+
+const app = express()
+const port = process.env.PORT || 4000 
+
+app.get('/', (req, res) => {
+  res.send('Hello World!')
+})
+
+app.listen(port, () => {
+  console.log(`Example app listening on port ${port}`)
+})
+
 client.login(token);
