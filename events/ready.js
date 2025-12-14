@@ -1,17 +1,40 @@
 const { Events } = require('discord.js');
-// Импортируем нашу функцию для массовой вставки (её нужно экспортировать из index.js)
-// ПРИМЕЧАНИЕ: Если код базы данных остался в index.js, 
-// вам нужно его оттуда экспортировать. Давайте сначала поправим index.js.
+const axios = require('axios');
+const PING_INTERVAL_MS = 8 * 60 * 1000;
 
-// --- Мы пока оставим эту часть пустой и перейдем к index.js ---
+const PING_URL = process.env.PUBLIC_URL || 'https://shikana.onrender.com';
+
+function externalPing() {
+    if (!PING_URL) {
+        console.warn("[PING] ВНИМАНИЕ: Переменная окружения PING_URL не установлена. Пингование не работает.");
+        return;
+    }
+
+    axios.get(PING_URL)
+        .then(() => {
+            console.log(`[PING SUCCESS] Успешный внешний пинг на ${PING_URL} в ${new Date().toLocaleTimeString()}`);
+        })
+        .catch((error) => {
+            console.error(`[PING ERROR] Ошибка при внешнем пинге на ${PING_URL}: ${error.message}`);
+        });
+}
 
 module.exports = {
 	name: Events.ClientReady,
 	once: true,
 	async execute(client) {
 		console.log(`Ready! Logged in as ${client.user.tag}`);
+		if (PING_URL) {
+		    setTimeout(externalPing, 30000); 
+		    
+		    setInterval(externalPing, PING_INTERVAL_MS);
+		    console.log(`[PING] Запущено внешнее пингование каждые ${PING_INTERVAL_MS / 60000} минут на URL: ${PING_URL}`);
+		} else {
+		     console.warn("[PING] Внешнее пингование не запущено, так как PING_URL не задан.");
+		}
 		
-		// 1. Находим все гильдии (серверы), к которым подключен бот
+		console.log(`\n\n✅ УСПЕХ: Сканирование при запуске завершено.`);
+		
 		const guilds = client.guilds.cache.values();
 		
 		let totalUsersScanned = 0;

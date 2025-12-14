@@ -1,8 +1,6 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const express = require('express');
-const axios = require('axios'); // Вам понадобится установить этот пакет: npm install axios
-const PING_INTERVAL_MS = 8 * 60 * 1000; // 8 минут в миллисекундах (меньше, чем 10 минут)
 const { Client, Events, GatewayIntentBits, Collection } = require('discord.js');
 const { token } = require('./config.json');
 
@@ -45,22 +43,6 @@ for (const file of eventFiles) {
 		client.on(event.name, (...args) => event.execute(...args));
 	}
 }
-
-function selfPing() {
-    const urlToPing = process.env.HOST_URL || `http://localhost:${process.env.PORT || 4000}`; 
-
-    axios.get(urlToPing)
-        .then(() => {
-            console.log(`[PING] Успешный пинг на ${urlToPing} в ${new Date().toLocaleTimeString()}`);
-        })
-        .catch((error) => {
-            console.error(`[PING] Ошибка при пинге: ${error.message}`);
-        });
-}
-
-setInterval(selfPing, PING_INTERVAL_MS);
-
-setTimeout(selfPing, 30000);
 
 const app = express()
 const port = process.env.PORT || 4000 
