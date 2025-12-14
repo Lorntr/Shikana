@@ -1,10 +1,20 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const express = require('express');
+const axios = require('axios'); // Вам понадобится установить этот пакет: npm install axios
+const PING_INTERVAL_MS = 8 * 60 * 1000; // 8 минут в миллисекундах (меньше, чем 10 минут)
 const { Client, Events, GatewayIntentBits, Collection } = require('discord.js');
 const { token } = require('./config.json');
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+const Database = require('better-sqlite3');
+const { db } = require('./databaseFunctions');
+
+const client = new Client({ intents: [
+    GatewayIntentBits.Guilds, 
+    GatewayIntentBits.GuildMessages, 
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMembers
+]});
 
 client.commands = new Collection(); 
 
@@ -36,32 +46,21 @@ for (const file of eventFiles) {
 	}
 }
 
+function selfPing() {
+    const urlToPing = process.env.HOST_URL || `http://localhost:${process.env.PORT || 4000}`; 
 
-client.on(Events.InteractionCreate, async (interaction) => {
-	if (!interaction.isChatInputCommand()) return;
-	const command = interaction.client.commands.get(interaction.commandName);
-	if (!command) {
-		console.error(`No command matching ${interaction.commandName} was found.`);
-		return;
-	}
-	try {
-		await command.execute(interaction);
-	} catch (error) {
-		console.error(error);
-		if (interaction.replied || interaction.deferred) {
-			await interaction.followUp({
-				content: 'There was an error while executing this command!',
-				flags: MessageFlags.Ephemeral,
-			});
-		} else {
-			await interaction.reply({
-				content: 'There was an error while executing this command!',
-				flags: MessageFlags.Ephemeral,
-			});
-		}
-	}
-});
+    axios.get(urlToPing)
+        .then(() => {
+            console.log(`[PING] Успешный пинг на ${urlToPing} в ${new Date().toLocaleTimeString()}`);
+        })
+        .catch((error) => {
+            console.error(`[PING] Ошибка при пинге: ${error.message}`);
+        });
+}
 
+setInterval(selfPing, PING_INTERVAL_MS);
+
+setTimeout(selfPing, 30000);
 
 const app = express()
 const port = process.env.PORT || 4000 
